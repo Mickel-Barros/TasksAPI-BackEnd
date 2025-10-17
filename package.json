@@ -1,30 +1,33 @@
 {
-  "name": "tasksapi-backend",
+  "name": "tasks-api",
   "version": "1.0.0",
-  "description": "Aplicação que permite criar tarefas, listar todas as tarefas e deletar tarefas específicas.",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "license": "MIT",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "ts-node-dev --transpile-only --respawn src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "prisma:generate": "prisma generate",
+    "test": "jest --runInBand"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Mickel-Barros/TasksAPI-BackEnd.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/Mickel-Barros/TasksAPI-BackEnd/issues"
-  },
-  "homepage": "https://github.com/Mickel-Barros/TasksAPI-BackEnd#readme",
   "dependencies": {
-    "express": "^5.1.0"
+    "@prisma/client": "^4.14.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.1.4",
+    "express": "^4.18.2",
+    "express-validator": "^6.15.0"
   },
   "devDependencies": {
-    "@types/express": "^5.0.3",
-    "@types/node": "^24.8.1",
-    "nodemon": "^3.1.10",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "@types/cors": "^2.8.19",
+    "@types/express": "^4.17.17",
+    "@types/jest": "^29.5.2",
+    "@types/node": "^20.3.1",
+    "jest": "^29.5.0",
+    "prisma": "^4.14.0",
+    "supertest": "^6.3.3",
+    "ts-jest": "^29.1.0",
+    "ts-node": "^10.9.1",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.1.3"
   }
 }
