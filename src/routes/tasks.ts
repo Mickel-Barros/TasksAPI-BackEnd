@@ -15,4 +15,14 @@ router.post(
   taskController.createTask
 );
 
+router.delete(
+  "/:id",
+  param("id").isInt().toInt(),
+  validateRequest,
+  taskController.deleteTask
+);
+
+
+
 export default router;
+

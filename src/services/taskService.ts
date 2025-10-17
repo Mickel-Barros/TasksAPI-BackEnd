@@ -12,3 +12,7 @@ export async function createTask(data: { title: string; description?: string }) 
     },
   });
 }
+
+export async function deleteTask(id: number) {
+  await prisma.task.delete({ where: { id } });
+}
