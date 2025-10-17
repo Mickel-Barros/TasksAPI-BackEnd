@@ -22,6 +22,12 @@ router.delete(
   taskController.deleteTask
 );
 
+router.patch(
+  "/:id/complete",
+  param("id").isInt().toInt(),
+  validateRequest,
+  taskController.completeTask
+);
 
 
 export default router;

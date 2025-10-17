@@ -29,3 +29,13 @@ export async function deleteTask(req: Request, res: Response, next: NextFunction
     next(err);
   }
 }
+
+export async function completeTask(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id);
+    const task = await taskService.markComplete(id);
+    res.json(task);
+  } catch (err) {
+    next(err);
+  }
+}
