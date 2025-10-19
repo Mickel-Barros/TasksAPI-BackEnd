@@ -108,19 +108,6 @@ const router = Router();
 
 /**
  * @swagger
- * /tasks/{id}/complete:
- *   patch:
- *     summary: Marca como concluída
- *     tags: [Tasks]
- *     parameters:
- *       - $ref: '#/components/parameters/TaskId'
- *     responses:
- *       200:
- *         description: Tarefa concluída
- */
-
-/**
- * @swagger
  * /tasks/{id}:
  *   delete:
  *     summary: Exclui tarefa

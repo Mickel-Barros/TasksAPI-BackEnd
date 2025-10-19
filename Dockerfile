@@ -5,7 +5,7 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 COPY prisma ./prisma/
 COPY tsconfig.json ./
-RUN npm ci --production
+RUN npm ci 
 
 COPY . .
 
