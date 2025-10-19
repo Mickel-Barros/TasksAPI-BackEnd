@@ -5,11 +5,11 @@ import sanitize from "sanitize-html";
 
 export async function listTasks(req: Request, res: Response, next: NextFunction) {
   try {
-    const tasks = await taskService.listTasks();
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const tasks = await taskService.listTasks(page, limit);
     res.json(tasks);
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
 }
 
 export async function createTask(req: Request, res: Response, next: NextFunction) {
@@ -42,4 +42,13 @@ export async function completeTask(req: Request, res: Response, next: NextFuncti
   } catch (err) {
     next(err);
   }
+}
+
+
+export async function updateTaskController(req: Request, res: Response, next: NextFunction) {
+  try {
+    const id = Number(req.params.id);
+    const task = await taskService.updateTask(id, req.body);
+    res.json(task);
+  } catch (err) { next(err); }
 }
