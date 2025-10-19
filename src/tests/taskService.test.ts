@@ -1,42 +1,142 @@
-import * as service from "../services/taskService";
-import prisma from "../db/prismaClient";
+import prisma from '../db/prismaClient';
+import { listTasks, createTask, deleteTask, updateTask } from '../services/taskService';
 
-jest.mock("../db/prismaClient", () => ({
+jest.mock('../db/prismaClient', () => ({
   task: {
     findMany: jest.fn(),
     create: jest.fn(),
-    delete: jest.fn(),
     update: jest.fn(),
+    findUnique: jest.fn(),
   },
 }));
 
-describe("taskService", () => {
-  afterEach(() => {
+
+describe('TaskService', () => {
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it("listTasks returns tasks", async () => {
-    const fake = [{ id:1, title: "t", description: "d", completed:false, createdAt: new Date() }];
-    (prisma.task.findMany as jest.Mock).mockResolvedValue(fake);
-    const r = await service.listTasks();
-    expect(r).toBe(fake);
-    expect(prisma.task.findMany).toHaveBeenCalled();
+  describe('listTasks', () => {
+    it('should list tasks with pagination', async () => {
+      const mockTasks = [
+        { id: 1, title: 'Task 1', description: 'Desc 1', completed: false, createdAt: new Date(), updatedAt: new Date(), deletedAt: null },
+      ];
+      (prisma.task.findMany as jest.Mock).mockResolvedValue(mockTasks);
+
+      const result = await listTasks(2, 5);
+
+      expect(prisma.task.findMany).toHaveBeenCalledWith({
+        where: { deletedAt: null },
+        skip: 5,
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+      });
+      expect(result).toEqual(mockTasks);
+    });
+    it('should use default pagination values when no arguments are provided', async () => {
+  const mockTasks = [
+    { id: 1, title: 'Task 1', description: 'Test', completed: false, createdAt: new Date(), updatedAt: new Date(), deletedAt: null },
+  ];
+
+  (prisma.task.findMany as jest.Mock).mockResolvedValue(mockTasks);
+
+  const result = await listTasks(); 
+
+  expect(prisma.task.findMany).toHaveBeenCalledWith({
+    where: { deletedAt: null },
+    skip: 0, 
+    take: 10,
+    orderBy: { createdAt: 'desc' },
   });
 
-  it("createTask creates", async () => {
-    const input = { title: "hello" };
-    const out = { id:2, ...input, description: null, completed:false, createdAt: new Date() };
-    (prisma.task.create as jest.Mock).mockResolvedValue(out);
-    const r = await service.createTask(input as any);
-    expect(r).toEqual(out);
-    expect(prisma.task.create).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ title: "hello" }) }));
+  expect(result).toEqual(mockTasks);
+});
+
   });
 
-  it("markComplete updates", async () => {
-    const out = { id:3, title:"x", description:null, completed:true, createdAt: new Date() };
-    (prisma.task.update as jest.Mock).mockResolvedValue(out);
-    const r = await service.markComplete(3);
-    expect(r).toEqual(out);
-    expect(prisma.task.update).toHaveBeenCalledWith(expect.objectContaining({ where: { id: 3 }, data: { completed: true } }));
+  describe('createTask', () => {
+    it('should create a task with title and description', async () => {
+      const mockTask = { id: 1, title: 'New Task', description: 'Desc', completed: false, createdAt: new Date(), updatedAt: new Date(), deletedAt: null };
+      (prisma.task.create as jest.Mock).mockResolvedValue(mockTask);
+
+      const result = await createTask({ title: 'New Task', description: 'Desc' });
+
+      expect(prisma.task.create).toHaveBeenCalledWith({
+        data: { title: 'New Task', description: 'Desc' },
+      });
+      expect(result).toEqual(mockTask);
+    });
+
+    it('should create a task without description', async () => {
+      const mockTask = { id: 1, title: 'New Task', description: null, completed: false, createdAt: new Date(), updatedAt: new Date(), deletedAt: null };
+      (prisma.task.create as jest.Mock).mockResolvedValue(mockTask);
+
+      const result = await createTask({ title: 'New Task' });
+
+      expect(prisma.task.create).toHaveBeenCalledWith({
+        data: { title: 'New Task', description: null },
+      });
+      expect(result).toEqual(mockTask);
+    });
   });
+
+  describe('deleteTask', () => {
+  it('should soft delete a task', async () => {
+    (prisma.task.findUnique as jest.Mock).mockResolvedValue({ id: 1, deletedAt: null });
+    (prisma.task.update as jest.Mock).mockResolvedValue({ id: 1, deletedAt: new Date() });
+
+    await deleteTask(1);
+
+    expect(prisma.task.findUnique).toHaveBeenCalledWith({ where: { id: 1 } });
+    expect(prisma.task.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: { deletedAt: expect.any(Date) },
+    });
+  });
+
+  it('should throw an error if task is not found', async () => {
+    (prisma.task.findUnique as jest.Mock).mockResolvedValue(null);
+
+    await expect(deleteTask(999)).rejects.toThrow('Task not found');
+  });
+});
+
+describe('updateTask', () => {
+  it('should update task title and description', async () => {
+    (prisma.task.findUnique as jest.Mock).mockResolvedValue({ id: 1, deletedAt: null });
+    const mockTask = { id: 1, title: 'Updated Task', description: 'Updated Desc', completed: false, createdAt: new Date(), updatedAt: new Date(), deletedAt: null };
+    (prisma.task.update as jest.Mock).mockResolvedValue(mockTask);
+
+    const result = await updateTask(1, { title: 'Updated Task', description: 'Updated Desc' });
+
+    expect(prisma.task.findUnique).toHaveBeenCalledWith({ where: { id: 1 } });
+    expect(prisma.task.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: { title: 'Updated Task', description: 'Updated Desc', updatedAt: expect.any(Date) },
+    });
+    expect(result).toEqual(mockTask);
+  });
+
+  it('should mark task as completed', async () => {
+    (prisma.task.findUnique as jest.Mock).mockResolvedValue({ id: 1, deletedAt: null });
+    const mockTask = { id: 1, title: 'Task', description: 'Desc', completed: true, createdAt: new Date(), updatedAt: new Date(), deletedAt: null };
+    (prisma.task.update as jest.Mock).mockResolvedValue(mockTask);
+
+    const result = await updateTask(1, { completed: true });
+
+    expect(prisma.task.findUnique).toHaveBeenCalledWith({ where: { id: 1 } });
+    expect(prisma.task.update).toHaveBeenCalledWith({
+      where: { id: 1 },
+      data: { completed: true, updatedAt: expect.any(Date) },
+    });
+    expect(result).toEqual(mockTask);
+  });
+
+  it('should throw an error if task is not found', async () => {
+    (prisma.task.findUnique as jest.Mock).mockResolvedValue(null);
+
+    await expect(updateTask(999, { title: 'Test' })).rejects.toThrow('Task not found');
+  });
+});
+
 });

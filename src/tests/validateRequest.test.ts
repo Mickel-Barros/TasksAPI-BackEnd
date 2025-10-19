@@ -1,26 +1,50 @@
-import { validateRequest } from "../validators/validateRequest";
-import { validationResult } from "express-validator";
+import request from "supertest";
+import express from "express";
+import tasksRouter from "../routes/tasks";
+import { errorHandler } from "../middleware/errorHandler";
 
-jest.mock("express-validator");
+jest.mock("../services/taskService", () => ({
+  createTask: jest.fn().mockResolvedValue({
+    success: true,
+    message: "Task created",
+  }),
+  listTasks: jest.fn(),
+  deleteTask: jest.fn(),
+  updateTask: jest.fn(),
+}));
+
+const app = express();
+app.use(express.json());
+app.use("/tasks", tasksRouter);
+app.use(errorHandler);
 
 describe("validateRequest middleware", () => {
-  const mockReq = {} as any;
-  const mockRes = { status: jest.fn().mockReturnThis(), json: jest.fn() };
-  const mockNext = jest.fn();
+  it("should return 400 if required fields are missing", async () => {
+    const response = await request(app).post("/tasks").send({});
 
-  it("deve chamar next se não houver erros", () => {
-    (validationResult as any).mockReturnValue({ isEmpty: () => true });
-    validateRequest(mockReq, mockRes as any, mockNext);
-    expect(mockNext).toHaveBeenCalled();
+    expect(response.status).toBe(400);
+    expect(response.body.success).toBe(false);
+    expect(response.body.message).toBe("Validation failed");
+    expect(Array.isArray(response.body.errors)).toBe(true);
+    expect(response.body.errors).toContain("title: Title is required");
   });
 
-  it("deve retornar 400 se houver erros", () => {
-    (validationResult as any).mockReturnValue({
-      isEmpty: () => false,
-      array: () => [{ msg: "erro", param: "title" }],
-    });
-    validateRequest(mockReq, mockRes as any, mockNext);
-    expect(mockRes.status).toHaveBeenCalledWith(400);
-    expect(mockRes.json).toHaveBeenCalledWith({ errors: [{ msg: "erro", param: "title" }] });
+  it("should return 400 if description is too short", async () => {
+    const response = await request(app)
+      .post("/tasks")
+      .send({ title: "Test Task", description: "123" });
+
+    expect(response.status).toBe(400);
+    expect(response.body.errors).toContain("description: Description must be at least 5 characters");
+  });
+
+  it("should pass validation with valid data", async () => {
+    const response = await request(app)
+      .post("/tasks")
+      .send({ title: "Valid Title", description: "Valid description" });
+
+    expect(response.status).toBe(201);
+    expect(response.body.success).toBe(true);
+    expect(response.body.message).toBe("Task created");
   });
 });

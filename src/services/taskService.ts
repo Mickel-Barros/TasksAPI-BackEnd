@@ -21,20 +21,21 @@ export async function createTask(data: { title: string; description?: string }) 
 }
 
 export async function deleteTask(id: number) {
+  const task = await prisma.task.findUnique({ where: { id } });
+  if (!task || task.deletedAt) {
+    throw new Error('Task not found');
+  }
+
   return prisma.task.update({
     where: { id },
     data: { deletedAt: new Date() },
   });
 }
 
-export async function markComplete(id: number) {
-  return prisma.task.update({
-    where: { id },
-    data: { completed: true },
-  });
-}
 
-export async function updateTask(id: number, data: { title?: string; description?: string }) {
+export async function updateTask(id: number, data: { title?: string; description?: string; completed?: boolean }) {
+  const task = await prisma.task.findUnique({ where: { id } });
+  if (!task || task.deletedAt) throw new Error('Task not found');
   return prisma.task.update({
     where: { id },
     data: {
