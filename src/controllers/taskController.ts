@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import * as taskService from "../services/taskService";
+import sanitize from "sanitize-html";
+
 
 export async function listTasks(req: Request, res: Response, next: NextFunction) {
   try {
@@ -12,7 +14,9 @@ export async function listTasks(req: Request, res: Response, next: NextFunction)
 
 export async function createTask(req: Request, res: Response, next: NextFunction) {
   try {
-    const { title, description } = req.body;
+    const title = sanitize(req.body.title);
+    const description = sanitize(req.body.description);
+
     const task = await taskService.createTask({ title, description });
     res.status(201).json(task);
   } catch (err) {
