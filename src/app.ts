@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import tasksRouter from "./routes/tasks";
 import { setupSwagger } from "./config/swagger";
+import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
 
@@ -18,5 +19,6 @@ app.use((err: any, req: any, res: any, next: any) => {
   console.error(err);
   res.status(err.status || 500).json({ error: err.message || "Internal Server Error" });
 });
+app.use(errorHandler);
 
 export default app;
