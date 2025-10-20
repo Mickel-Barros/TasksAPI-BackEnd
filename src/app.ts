@@ -10,7 +10,7 @@ const app = express();
 setupSwagger(app);
 
 
-app.use(cors({ origin: ["http://localhost:3000"], methods: ["GET", "POST", "DELETE", "PATCH"] }));
+app.use(cors({ origin: ["https://tasks-api-front-end-pwoq.vercel.app/"], methods: ["GET", "POST", "DELETE", "PATCH"] }));
 
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
